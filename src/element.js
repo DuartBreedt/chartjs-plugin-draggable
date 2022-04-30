@@ -16,9 +16,8 @@
 */
 
 export class DraggableElement {
-	constructor(chartInstance, elementInstance, elementConfig) {
+	constructor(chartInstance, elementConfig) {
 		this.chart = chartInstance;
-		this.element = elementInstance;
 		this.config = elementConfig;
 	}
 
@@ -32,7 +31,7 @@ export class DraggableElement {
 		}
 	}
 
-	dispatch(type, event) {
+	dispatch(type, event, value) {
 		// Invoke plugin callback
 		if (typeof this[type] === 'function') {
 			this[type](event);
@@ -40,7 +39,8 @@ export class DraggableElement {
 
 		// Invoke user callback
 		if (typeof this.config[type] === 'function') {
-			this.config[type](event);
+			const args = [event, this.config.value]
+			this.config[type](...args);
 		}
 	}
 }

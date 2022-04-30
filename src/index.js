@@ -9,6 +9,6 @@ const plugin = new ChartjsDraggablePlugin([
 	DraggableAnnotationAccessor
 ]);
 
-Chart.pluginService.register(plugin);
+Chart.register(plugin);
 
 export default plugin;

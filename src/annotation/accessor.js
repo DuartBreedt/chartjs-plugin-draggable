@@ -2,6 +2,7 @@
 
 import { DraggableElementAccessor } from '../accessor';
 import { DraggableLineAnnotationElement } from './line-element';
+import { DraggablePointAnnotationElement } from './point-element';
 
 /*
 annotation: {
@@ -24,20 +25,19 @@ annotation: {
 
 export class DraggableAnnotationAccessor extends DraggableElementAccessor {
 	static isSupported() {
-		return !!Chart.Annotation;
+		return true
 	}
 
-	static getElements(chartInstance) {
+	static getElements(event, chartInstance) {
 		return DraggableElementAccessor.getElements(
 			chartInstance,
-			Object.keys(chartInstance.annotation.elements).map(id => chartInstance.annotation.elements[id]),
-			Object.keys(chartInstance.annotation.elements).map(id => chartInstance.annotation.elements[id].options),
+			Object.keys(chartInstance.config.options.plugins.annotation.annotations).map(id => chartInstance.config.options.plugins.annotation.annotations[id]),
 			(config) => {
 				switch (config.type) {
 					case 'line':
 						return DraggableLineAnnotationElement;
-
-					// @TODO: implement 'box' support, DraggableBoxAnnotationElement class
+					case 'point':
+						return DraggablePointAnnotationElement;
 				}
 			}
 		);

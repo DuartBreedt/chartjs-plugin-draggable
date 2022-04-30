@@ -3,8 +3,8 @@
 import { DraggableElement } from '../element';
 
 export class DraggableLineAnnotationElement extends DraggableElement {
-	constructor(chartInstance, elementInstance, elementConfig) {
-		super(chartInstance, elementInstance, elementConfig);
+	constructor(chartInstance, elementConfig) {
+		super(chartInstance, elementConfig);
 		this.scale = this.chart.scales[elementConfig.scaleID];
 	}
 
@@ -28,5 +28,9 @@ export class DraggableLineAnnotationElement extends DraggableElement {
 
 	onDragEnd(event) {
 		this.offset = undefined;
+	}
+
+	dispatch(type, event) {
+		super.dispatch(type, event, this.config.value)
 	}
 }

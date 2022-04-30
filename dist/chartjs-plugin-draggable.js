@@ -51,7 +51,7 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -71,19 +71,19 @@
 
 	var plugin = new _plugin.ChartjsDraggablePlugin([_accessor.DraggableAnnotationAccessor]);
 
-	_chart2.default.pluginService.register(plugin);
+	_chart2.default.register(plugin);
 
 	exports.default = plugin;
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = Chart;
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -106,49 +106,36 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	function getFilter(chartInstance, accessors) {
+	function getFilter(chart, accessors) {
 		return function () {
-			var position = _chart2.default.helpers.getRelativePosition(_d3Selection.event, chartInstance.chart);
 			var minDistance = Number.POSITIVE_INFINITY;
 
-			chartInstance.draggable.subject = accessors
+			chart.draggable.subject = accessors
 			// All draggable elements that are enabled
 			.map(function (accessor) {
-				return accessor.getElements(chartInstance);
+				return accessor.getElements(_d3Selection.event, chart);
 			})
 			// Flatten array of arrays
 			.reduce(function (list, innerList) {
 				return list.concat(innerList);
 			}, [])
-			// Each element must implement these methods for the rest to work
-			.filter(function (element) {
-				return element.element.inRange && element.element.getCenterPoint && element.element.getArea;
-			})
-			// Find the elements in range of the mouse position
-			.filter(function (element) {
-				return element.element.inRange(position.x, position.y);
-			})
 			// Pick the element(s) nearest the mouse position
-			.reduce(function (nearestElements, element) {
-				var center = element.element.getCenterPoint();
-				var distance = _chart2.default.helpers.distanceBetweenPoints(position, center);
+			.reduce(function (nearestElement, element) {
 
-				if (distance < minDistance) {
-					nearestElements = [element];
+				var elementPixelDimension = element.scale.getPixelForValue(element.config.value);
+				var elementCenter = element.scale.isHorizontal() ? { x: elementPixelDimension, y: _d3Selection.event.y } : { x: _d3Selection.event.x, y: elementPixelDimension };
+
+				var distance = _chart2.default.helpers.distanceBetweenPoints(elementCenter, _d3Selection.event);
+
+				if (distance < 20 && distance < minDistance) {
+					nearestElement = element;
 					minDistance = distance;
-				} else if (distance === minDistance) {
-					// Can have multiple items at the same distance
-					nearestElements.push(element);
 				}
 
-				return nearestElements;
-			}, [])
-			// Use the element size as a tiebreaker
-			.sort(function (a, b) {
-				return a.element.getArea() - b.element.getArea();
-			})[0];
+				return nearestElement;
+			}, undefined);
 
-			return !!chartInstance.draggable.subject;
+			return !!chart.draggable.subject;
 		};
 	}
 
@@ -168,6 +155,7 @@
 		function ChartjsDraggablePlugin(accessors) {
 			_classCallCheck(this, ChartjsDraggablePlugin);
 
+			this.id = "chartjsDraggablePlugin";
 			this.accessors = accessors.filter(function (accessor) {
 				return accessor.isSupported();
 			});
@@ -175,39 +163,39 @@
 
 		_createClass(ChartjsDraggablePlugin, [{
 			key: 'afterInit',
-			value: function afterInit(chartInstance) {
-				chartInstance.draggable = {};
+			value: function afterInit(chart) {
+				chart.draggable = {};
 
-				var subjectPicker = getSubjectPicker(chartInstance);
+				var subjectPicker = getSubjectPicker(chart);
 
-				(0, _d3Selection.select)(chartInstance.chart.canvas).call((0, _d3Drag.drag)().container(chartInstance.chart.canvas).filter(getFilter(chartInstance, this.accessors)).subject(subjectPicker).on('start', getDispatcher(subjectPicker, 'onDragStart')).on('drag', getDispatcher(subjectPicker, 'onDrag')).on('end', getDispatcher(subjectPicker, 'onDragEnd')));
+				(0, _d3Selection.select)(chart.canvas).call((0, _d3Drag.drag)().container(chart.canvas).filter(getFilter(chart, this.accessors)).subject(subjectPicker).on('start', getDispatcher(subjectPicker, 'onDragStart')).on('drag', getDispatcher(subjectPicker, 'onDrag')).on('end', getDispatcher(subjectPicker, 'onDragEnd')));
 			}
 		}]);
 
 		return ChartjsDraggablePlugin;
 	}();
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-	// https://d3js.org/d3-drag/ Version 1.0.2. Copyright 2016 Mike Bostock.
+	// https://d3js.org/d3-drag/ v1.2.5 Copyright 2019 Mike Bostock
 	(function (global, factory) {
-	   true ? factory(exports, __webpack_require__(4), __webpack_require__(5)) :
-	  typeof define === 'function' && define.amd ? define(['exports', 'd3-dispatch', 'd3-selection'], factory) :
-	  (factory((global.d3 = global.d3 || {}),global.d3,global.d3));
-	}(this, (function (exports,d3Dispatch,d3Selection) { 'use strict';
+	 true ? factory(exports, __webpack_require__(4), __webpack_require__(5)) :
+	typeof define === 'function' && define.amd ? define(['exports', 'd3-dispatch', 'd3-selection'], factory) :
+	(global = global || self, factory(global.d3 = global.d3 || {}, global.d3, global.d3));
+	}(this, function (exports, d3Dispatch, d3Selection) { 'use strict';
 
 	function nopropagation() {
 	  d3Selection.event.stopImmediatePropagation();
 	}
 
-	var noevent = function() {
+	function noevent() {
 	  d3Selection.event.preventDefault();
 	  d3Selection.event.stopImmediatePropagation();
-	};
+	}
 
-	var nodrag = function(view) {
+	function nodrag(view) {
 	  var root = view.document.documentElement,
 	      selection = d3Selection.select(view).on("dragstart.drag", noevent, true);
 	  if ("onselectstart" in root) {
@@ -216,7 +204,7 @@
 	    root.__noselect = root.style.MozUserSelect;
 	    root.style.MozUserSelect = "none";
 	  }
-	};
+	}
 
 	function yesdrag(view, noclick) {
 	  var root = view.document.documentElement,
@@ -233,13 +221,13 @@
 	  }
 	}
 
-	var constant = function(x) {
+	function constant(x) {
 	  return function() {
 	    return x;
 	  };
-	};
+	}
 
-	function DragEvent(target, type, subject, id, active, x, y, dx, dy, dispatch$$1) {
+	function DragEvent(target, type, subject, id, active, x, y, dx, dy, dispatch) {
 	  this.target = target;
 	  this.type = type;
 	  this.subject = subject;
@@ -249,7 +237,7 @@
 	  this.y = y;
 	  this.dx = dx;
 	  this.dy = dy;
-	  this._ = dispatch$$1;
+	  this._ = dispatch;
 	}
 
 	DragEvent.prototype.on = function() {
@@ -259,7 +247,7 @@
 
 	// Ignore right-click, since that should open the context menu.
 	function defaultFilter() {
-	  return !d3Selection.event.button;
+	  return !d3Selection.event.ctrlKey && !d3Selection.event.button;
 	}
 
 	function defaultContainer() {
@@ -270,22 +258,32 @@
 	  return d == null ? {x: d3Selection.event.x, y: d3Selection.event.y} : d;
 	}
 
-	var drag = function() {
+	function defaultTouchable() {
+	  return navigator.maxTouchPoints || ("ontouchstart" in this);
+	}
+
+	function drag() {
 	  var filter = defaultFilter,
 	      container = defaultContainer,
 	      subject = defaultSubject,
+	      touchable = defaultTouchable,
 	      gestures = {},
 	      listeners = d3Dispatch.dispatch("start", "drag", "end"),
 	      active = 0,
+	      mousedownx,
+	      mousedowny,
 	      mousemoving,
-	      touchending;
+	      touchending,
+	      clickDistance2 = 0;
 
 	  function drag(selection) {
 	    selection
 	        .on("mousedown.drag", mousedowned)
+	      .filter(touchable)
 	        .on("touchstart.drag", touchstarted)
 	        .on("touchmove.drag", touchmoved)
 	        .on("touchend.drag touchcancel.drag", touchended)
+	        .style("touch-action", "none")
 	        .style("-webkit-tap-highlight-color", "rgba(0,0,0,0)");
 	  }
 
@@ -297,12 +295,17 @@
 	    nodrag(d3Selection.event.view);
 	    nopropagation();
 	    mousemoving = false;
+	    mousedownx = d3Selection.event.clientX;
+	    mousedowny = d3Selection.event.clientY;
 	    gesture("start");
 	  }
 
 	  function mousemoved() {
 	    noevent();
-	    mousemoving = true;
+	    if (!mousemoving) {
+	      var dx = d3Selection.event.clientX - mousedownx, dy = d3Selection.event.clientY - mousedowny;
+	      mousemoving = dx * dx + dy * dy > clickDistance2;
+	    }
 	    gestures.mouse("drag");
 	  }
 
@@ -387,13 +390,21 @@
 	    return arguments.length ? (subject = typeof _ === "function" ? _ : constant(_), drag) : subject;
 	  };
 
+	  drag.touchable = function(_) {
+	    return arguments.length ? (touchable = typeof _ === "function" ? _ : constant(!!_), drag) : touchable;
+	  };
+
 	  drag.on = function() {
 	    var value = listeners.on.apply(listeners, arguments);
 	    return value === listeners ? drag : value;
 	  };
 
+	  drag.clickDistance = function(_) {
+	    return arguments.length ? (clickDistance2 = (_ = +_) * _, drag) : Math.sqrt(clickDistance2);
+	  };
+
 	  return drag;
-	};
+	}
 
 	exports.drag = drag;
 	exports.dragDisable = nodrag;
@@ -401,25 +412,25 @@
 
 	Object.defineProperty(exports, '__esModule', { value: true });
 
-	})));
+	}));
 
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-	// https://d3js.org/d3-dispatch/ Version 1.0.2. Copyright 2016 Mike Bostock.
+	// https://d3js.org/d3-dispatch/ v1.0.6 Copyright 2019 Mike Bostock
 	(function (global, factory) {
-	   true ? factory(exports) :
-	  typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	  (factory((global.d3 = global.d3 || {})));
-	}(this, (function (exports) { 'use strict';
+	 true ? factory(exports) :
+	typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	(global = global || self, factory(global.d3 = global.d3 || {}));
+	}(this, function (exports) { 'use strict';
 
 	var noop = {value: function() {}};
 
 	function dispatch() {
 	  for (var i = 0, n = arguments.length, _ = {}, t; i < n; ++i) {
-	    if (!(t = arguments[i] + "") || (t in _)) throw new Error("illegal type: " + t);
+	    if (!(t = arguments[i] + "") || (t in _) || /[\s.]/.test(t)) throw new Error("illegal type: " + t);
 	    _[t] = [];
 	  }
 	  return new Dispatch(_);
@@ -502,19 +513,19 @@
 
 	Object.defineProperty(exports, '__esModule', { value: true });
 
-	})));
+	}));
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-	// https://d3js.org/d3-selection/ Version 1.0.3. Copyright 2016 Mike Bostock.
+	// https://d3js.org/d3-selection/ v1.4.2 Copyright 2020 Mike Bostock
 	(function (global, factory) {
-	   true ? factory(exports) :
-	  typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	  (factory((global.d3 = global.d3 || {})));
-	}(this, (function (exports) { 'use strict';
+	 true ? factory(exports) :
+	typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	(global = global || self, factory(global.d3 = global.d3 || {}));
+	}(this, function (exports) { 'use strict';
 
 	var xhtml = "http://www.w3.org/1999/xhtml";
 
@@ -526,11 +537,11 @@
 	  xmlns: "http://www.w3.org/2000/xmlns/"
 	};
 
-	var namespace = function(name) {
+	function namespace(name) {
 	  var prefix = name += "", i = prefix.indexOf(":");
 	  if (i >= 0 && (prefix = name.slice(0, i)) !== "xmlns") name = name.slice(i + 1);
 	  return namespaces.hasOwnProperty(prefix) ? {space: namespaces[prefix], local: name} : name;
-	};
+	}
 
 	function creatorInherit(name) {
 	  return function() {
@@ -548,207 +559,22 @@
 	  };
 	}
 
-	var creator = function(name) {
+	function creator(name) {
 	  var fullname = namespace(name);
 	  return (fullname.local
 	      ? creatorFixed
 	      : creatorInherit)(fullname);
-	};
-
-	var nextId = 0;
-
-	function local() {
-	  return new Local;
 	}
-
-	function Local() {
-	  this._ = "@" + (++nextId).toString(36);
-	}
-
-	Local.prototype = local.prototype = {
-	  constructor: Local,
-	  get: function(node) {
-	    var id = this._;
-	    while (!(id in node)) if (!(node = node.parentNode)) return;
-	    return node[id];
-	  },
-	  set: function(node, value) {
-	    return node[this._] = value;
-	  },
-	  remove: function(node) {
-	    return this._ in node && delete node[this._];
-	  },
-	  toString: function() {
-	    return this._;
-	  }
-	};
-
-	var matcher = function(selector) {
-	  return function() {
-	    return this.matches(selector);
-	  };
-	};
-
-	if (typeof document !== "undefined") {
-	  var element = document.documentElement;
-	  if (!element.matches) {
-	    var vendorMatches = element.webkitMatchesSelector
-	        || element.msMatchesSelector
-	        || element.mozMatchesSelector
-	        || element.oMatchesSelector;
-	    matcher = function(selector) {
-	      return function() {
-	        return vendorMatches.call(this, selector);
-	      };
-	    };
-	  }
-	}
-
-	var matcher$1 = matcher;
-
-	var filterEvents = {};
-
-	exports.event = null;
-
-	if (typeof document !== "undefined") {
-	  var element$1 = document.documentElement;
-	  if (!("onmouseenter" in element$1)) {
-	    filterEvents = {mouseenter: "mouseover", mouseleave: "mouseout"};
-	  }
-	}
-
-	function filterContextListener(listener, index, group) {
-	  listener = contextListener(listener, index, group);
-	  return function(event) {
-	    var related = event.relatedTarget;
-	    if (!related || (related !== this && !(related.compareDocumentPosition(this) & 8))) {
-	      listener.call(this, event);
-	    }
-	  };
-	}
-
-	function contextListener(listener, index, group) {
-	  return function(event1) {
-	    var event0 = exports.event; // Events can be reentrant (e.g., focus).
-	    exports.event = event1;
-	    try {
-	      listener.call(this, this.__data__, index, group);
-	    } finally {
-	      exports.event = event0;
-	    }
-	  };
-	}
-
-	function parseTypenames(typenames) {
-	  return typenames.trim().split(/^|\s+/).map(function(t) {
-	    var name = "", i = t.indexOf(".");
-	    if (i >= 0) name = t.slice(i + 1), t = t.slice(0, i);
-	    return {type: t, name: name};
-	  });
-	}
-
-	function onRemove(typename) {
-	  return function() {
-	    var on = this.__on;
-	    if (!on) return;
-	    for (var j = 0, i = -1, m = on.length, o; j < m; ++j) {
-	      if (o = on[j], (!typename.type || o.type === typename.type) && o.name === typename.name) {
-	        this.removeEventListener(o.type, o.listener, o.capture);
-	      } else {
-	        on[++i] = o;
-	      }
-	    }
-	    if (++i) on.length = i;
-	    else delete this.__on;
-	  };
-	}
-
-	function onAdd(typename, value, capture) {
-	  var wrap = filterEvents.hasOwnProperty(typename.type) ? filterContextListener : contextListener;
-	  return function(d, i, group) {
-	    var on = this.__on, o, listener = wrap(value, i, group);
-	    if (on) for (var j = 0, m = on.length; j < m; ++j) {
-	      if ((o = on[j]).type === typename.type && o.name === typename.name) {
-	        this.removeEventListener(o.type, o.listener, o.capture);
-	        this.addEventListener(o.type, o.listener = listener, o.capture = capture);
-	        o.value = value;
-	        return;
-	      }
-	    }
-	    this.addEventListener(typename.type, listener, capture);
-	    o = {type: typename.type, name: typename.name, value: value, listener: listener, capture: capture};
-	    if (!on) this.__on = [o];
-	    else on.push(o);
-	  };
-	}
-
-	var selection_on = function(typename, value, capture) {
-	  var typenames = parseTypenames(typename + ""), i, n = typenames.length, t;
-
-	  if (arguments.length < 2) {
-	    var on = this.node().__on;
-	    if (on) for (var j = 0, m = on.length, o; j < m; ++j) {
-	      for (i = 0, o = on[j]; i < n; ++i) {
-	        if ((t = typenames[i]).type === o.type && t.name === o.name) {
-	          return o.value;
-	        }
-	      }
-	    }
-	    return;
-	  }
-
-	  on = value ? onAdd : onRemove;
-	  if (capture == null) capture = false;
-	  for (i = 0; i < n; ++i) this.each(on(typenames[i], value, capture));
-	  return this;
-	};
-
-	function customEvent(event1, listener, that, args) {
-	  var event0 = exports.event;
-	  event1.sourceEvent = exports.event;
-	  exports.event = event1;
-	  try {
-	    return listener.apply(that, args);
-	  } finally {
-	    exports.event = event0;
-	  }
-	}
-
-	var sourceEvent = function() {
-	  var current = exports.event, source;
-	  while (source = current.sourceEvent) current = source;
-	  return current;
-	};
-
-	var point = function(node, event) {
-	  var svg = node.ownerSVGElement || node;
-
-	  if (svg.createSVGPoint) {
-	    var point = svg.createSVGPoint();
-	    point.x = event.clientX, point.y = event.clientY;
-	    point = point.matrixTransform(node.getScreenCTM().inverse());
-	    return [point.x, point.y];
-	  }
-
-	  var rect = node.getBoundingClientRect();
-	  return [event.clientX - rect.left - node.clientLeft, event.clientY - rect.top - node.clientTop];
-	};
-
-	var mouse = function(node) {
-	  var event = sourceEvent();
-	  if (event.changedTouches) event = event.changedTouches[0];
-	  return point(node, event);
-	};
 
 	function none() {}
 
-	var selector = function(selector) {
+	function selector(selector) {
 	  return selector == null ? none : function() {
 	    return this.querySelector(selector);
 	  };
-	};
+	}
 
-	var selection_select = function(select) {
+	function selection_select(select) {
 	  if (typeof select !== "function") select = selector(select);
 
 	  for (var groups = this._groups, m = groups.length, subgroups = new Array(m), j = 0; j < m; ++j) {
@@ -761,19 +587,19 @@
 	  }
 
 	  return new Selection(subgroups, this._parents);
-	};
+	}
 
 	function empty() {
 	  return [];
 	}
 
-	var selectorAll = function(selector) {
+	function selectorAll(selector) {
 	  return selector == null ? empty : function() {
 	    return this.querySelectorAll(selector);
 	  };
-	};
+	}
 
-	var selection_selectAll = function(select) {
+	function selection_selectAll(select) {
 	  if (typeof select !== "function") select = selectorAll(select);
 
 	  for (var groups = this._groups, m = groups.length, subgroups = [], parents = [], j = 0; j < m; ++j) {
@@ -786,10 +612,16 @@
 	  }
 
 	  return new Selection(subgroups, parents);
-	};
+	}
 
-	var selection_filter = function(match) {
-	  if (typeof match !== "function") match = matcher$1(match);
+	function matcher(selector) {
+	  return function() {
+	    return this.matches(selector);
+	  };
+	}
+
+	function selection_filter(match) {
+	  if (typeof match !== "function") match = matcher(match);
 
 	  for (var groups = this._groups, m = groups.length, subgroups = new Array(m), j = 0; j < m; ++j) {
 	    for (var group = groups[j], n = group.length, subgroup = subgroups[j] = [], node, i = 0; i < n; ++i) {
@@ -800,15 +632,15 @@
 	  }
 
 	  return new Selection(subgroups, this._parents);
-	};
+	}
 
-	var sparse = function(update) {
+	function sparse(update) {
 	  return new Array(update.length);
-	};
+	}
 
-	var selection_enter = function() {
+	function selection_enter() {
 	  return new Selection(this._enter || this._groups.map(sparse), this._parents);
-	};
+	}
 
 	function EnterNode(parent, datum) {
 	  this.ownerDocument = parent.ownerDocument;
@@ -826,11 +658,11 @@
 	  querySelectorAll: function(selector) { return this._parent.querySelectorAll(selector); }
 	};
 
-	var constant = function(x) {
+	function constant(x) {
 	  return function() {
 	    return x;
 	  };
-	};
+	}
 
 	var keyPrefix = "$"; // Protect against keys like “__proto__”.
 
@@ -904,7 +736,7 @@
 	  }
 	}
 
-	var selection_data = function(value, key) {
+	function selection_data(value, key) {
 	  if (!value) {
 	    data = new Array(this.size()), j = -1;
 	    this.each(function(d) { data[++j] = d; });
@@ -945,13 +777,21 @@
 	  update._enter = enter;
 	  update._exit = exit;
 	  return update;
-	};
+	}
 
-	var selection_exit = function() {
+	function selection_exit() {
 	  return new Selection(this._exit || this._groups.map(sparse), this._parents);
-	};
+	}
 
-	var selection_merge = function(selection) {
+	function selection_join(onenter, onupdate, onexit) {
+	  var enter = this.enter(), update = this, exit = this.exit();
+	  enter = typeof onenter === "function" ? onenter(enter) : enter.append(onenter + "");
+	  if (onupdate != null) update = onupdate(update);
+	  if (onexit == null) exit.remove(); else onexit(exit);
+	  return enter && update ? enter.merge(update).order() : update;
+	}
+
+	function selection_merge(selection) {
 
 	  for (var groups0 = this._groups, groups1 = selection._groups, m0 = groups0.length, m1 = groups1.length, m = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m; ++j) {
 	    for (var group0 = groups0[j], group1 = groups1[j], n = group0.length, merge = merges[j] = new Array(n), node, i = 0; i < n; ++i) {
@@ -966,23 +806,23 @@
 	  }
 
 	  return new Selection(merges, this._parents);
-	};
+	}
 
-	var selection_order = function() {
+	function selection_order() {
 
 	  for (var groups = this._groups, j = -1, m = groups.length; ++j < m;) {
 	    for (var group = groups[j], i = group.length - 1, next = group[i], node; --i >= 0;) {
 	      if (node = group[i]) {
-	        if (next && next !== node.nextSibling) next.parentNode.insertBefore(node, next);
+	        if (next && node.compareDocumentPosition(next) ^ 4) next.parentNode.insertBefore(node, next);
 	        next = node;
 	      }
 	    }
 	  }
 
 	  return this;
-	};
+	}
 
-	var selection_sort = function(compare) {
+	function selection_sort(compare) {
 	  if (!compare) compare = ascending;
 
 	  function compareNode(a, b) {
@@ -999,26 +839,26 @@
 	  }
 
 	  return new Selection(sortgroups, this._parents).order();
-	};
+	}
 
 	function ascending(a, b) {
 	  return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
 	}
 
-	var selection_call = function() {
+	function selection_call() {
 	  var callback = arguments[0];
 	  arguments[0] = this;
 	  callback.apply(null, arguments);
 	  return this;
-	};
+	}
 
-	var selection_nodes = function() {
+	function selection_nodes() {
 	  var nodes = new Array(this.size()), i = -1;
 	  this.each(function() { nodes[++i] = this; });
 	  return nodes;
-	};
+	}
 
-	var selection_node = function() {
+	function selection_node() {
 
 	  for (var groups = this._groups, j = 0, m = groups.length; j < m; ++j) {
 	    for (var group = groups[j], i = 0, n = group.length; i < n; ++i) {
@@ -1028,19 +868,19 @@
 	  }
 
 	  return null;
-	};
+	}
 
-	var selection_size = function() {
+	function selection_size() {
 	  var size = 0;
 	  this.each(function() { ++size; });
 	  return size;
-	};
+	}
 
-	var selection_empty = function() {
+	function selection_empty() {
 	  return !this.node();
-	};
+	}
 
-	var selection_each = function(callback) {
+	function selection_each(callback) {
 
 	  for (var groups = this._groups, j = 0, m = groups.length; j < m; ++j) {
 	    for (var group = groups[j], i = 0, n = group.length, node; i < n; ++i) {
@@ -1049,7 +889,7 @@
 	  }
 
 	  return this;
-	};
+	}
 
 	function attrRemove(name) {
 	  return function() {
@@ -1091,7 +931,7 @@
 	  };
 	}
 
-	var selection_attr = function(name, value) {
+	function selection_attr(name, value) {
 	  var fullname = namespace(name);
 
 	  if (arguments.length < 2) {
@@ -1105,13 +945,13 @@
 	      ? (fullname.local ? attrRemoveNS : attrRemove) : (typeof value === "function"
 	      ? (fullname.local ? attrFunctionNS : attrFunction)
 	      : (fullname.local ? attrConstantNS : attrConstant)))(fullname, value));
-	};
+	}
 
-	var defaultView = function(node) {
+	function defaultView(node) {
 	  return (node.ownerDocument && node.ownerDocument.defaultView) // node is a Node
 	      || (node.document && node) // node is a Window
 	      || node.defaultView; // node is a Document
-	};
+	}
 
 	function styleRemove(name) {
 	  return function() {
@@ -1133,17 +973,19 @@
 	  };
 	}
 
-	var selection_style = function(name, value, priority) {
-	  var node;
+	function selection_style(name, value, priority) {
 	  return arguments.length > 1
 	      ? this.each((value == null
 	            ? styleRemove : typeof value === "function"
 	            ? styleFunction
 	            : styleConstant)(name, value, priority == null ? "" : priority))
-	      : defaultView(node = this.node())
-	          .getComputedStyle(node, null)
-	          .getPropertyValue(name);
-	};
+	      : styleValue(this.node(), name);
+	}
+
+	function styleValue(node, name) {
+	  return node.style.getPropertyValue(name)
+	      || defaultView(node).getComputedStyle(node, null).getPropertyValue(name);
+	}
 
 	function propertyRemove(name) {
 	  return function() {
@@ -1165,14 +1007,14 @@
 	  };
 	}
 
-	var selection_property = function(name, value) {
+	function selection_property(name, value) {
 	  return arguments.length > 1
 	      ? this.each((value == null
 	          ? propertyRemove : typeof value === "function"
 	          ? propertyFunction
 	          : propertyConstant)(name, value))
 	      : this.node()[name];
-	};
+	}
 
 	function classArray(string) {
 	  return string.trim().split(/^|\s+/);
@@ -1235,7 +1077,7 @@
 	  };
 	}
 
-	var selection_classed = function(name, value) {
+	function selection_classed(name, value) {
 	  var names = classArray(name + "");
 
 	  if (arguments.length < 2) {
@@ -1248,7 +1090,7 @@
 	      ? classedFunction : value
 	      ? classedTrue
 	      : classedFalse)(names, value));
-	};
+	}
 
 	function textRemove() {
 	  this.textContent = "";
@@ -1267,14 +1109,14 @@
 	  };
 	}
 
-	var selection_text = function(value) {
+	function selection_text(value) {
 	  return arguments.length
 	      ? this.each(value == null
 	          ? textRemove : (typeof value === "function"
 	          ? textFunction
 	          : textConstant)(value))
 	      : this.node().textContent;
-	};
+	}
 
 	function htmlRemove() {
 	  this.innerHTML = "";
@@ -1293,70 +1135,192 @@
 	  };
 	}
 
-	var selection_html = function(value) {
+	function selection_html(value) {
 	  return arguments.length
 	      ? this.each(value == null
 	          ? htmlRemove : (typeof value === "function"
 	          ? htmlFunction
 	          : htmlConstant)(value))
 	      : this.node().innerHTML;
-	};
+	}
 
 	function raise() {
 	  if (this.nextSibling) this.parentNode.appendChild(this);
 	}
 
-	var selection_raise = function() {
+	function selection_raise() {
 	  return this.each(raise);
-	};
+	}
 
 	function lower() {
 	  if (this.previousSibling) this.parentNode.insertBefore(this, this.parentNode.firstChild);
 	}
 
-	var selection_lower = function() {
+	function selection_lower() {
 	  return this.each(lower);
-	};
+	}
 
-	var selection_append = function(name) {
+	function selection_append(name) {
 	  var create = typeof name === "function" ? name : creator(name);
 	  return this.select(function() {
 	    return this.appendChild(create.apply(this, arguments));
 	  });
-	};
+	}
 
 	function constantNull() {
 	  return null;
 	}
 
-	var selection_insert = function(name, before) {
+	function selection_insert(name, before) {
 	  var create = typeof name === "function" ? name : creator(name),
 	      select = before == null ? constantNull : typeof before === "function" ? before : selector(before);
 	  return this.select(function() {
 	    return this.insertBefore(create.apply(this, arguments), select.apply(this, arguments) || null);
 	  });
-	};
+	}
 
 	function remove() {
 	  var parent = this.parentNode;
 	  if (parent) parent.removeChild(this);
 	}
 
-	var selection_remove = function() {
+	function selection_remove() {
 	  return this.each(remove);
-	};
+	}
 
-	var selection_datum = function(value) {
+	function selection_cloneShallow() {
+	  var clone = this.cloneNode(false), parent = this.parentNode;
+	  return parent ? parent.insertBefore(clone, this.nextSibling) : clone;
+	}
+
+	function selection_cloneDeep() {
+	  var clone = this.cloneNode(true), parent = this.parentNode;
+	  return parent ? parent.insertBefore(clone, this.nextSibling) : clone;
+	}
+
+	function selection_clone(deep) {
+	  return this.select(deep ? selection_cloneDeep : selection_cloneShallow);
+	}
+
+	function selection_datum(value) {
 	  return arguments.length
 	      ? this.property("__data__", value)
 	      : this.node().__data__;
-	};
+	}
+
+	var filterEvents = {};
+
+	exports.event = null;
+
+	if (typeof document !== "undefined") {
+	  var element = document.documentElement;
+	  if (!("onmouseenter" in element)) {
+	    filterEvents = {mouseenter: "mouseover", mouseleave: "mouseout"};
+	  }
+	}
+
+	function filterContextListener(listener, index, group) {
+	  listener = contextListener(listener, index, group);
+	  return function(event) {
+	    var related = event.relatedTarget;
+	    if (!related || (related !== this && !(related.compareDocumentPosition(this) & 8))) {
+	      listener.call(this, event);
+	    }
+	  };
+	}
+
+	function contextListener(listener, index, group) {
+	  return function(event1) {
+	    var event0 = exports.event; // Events can be reentrant (e.g., focus).
+	    exports.event = event1;
+	    try {
+	      listener.call(this, this.__data__, index, group);
+	    } finally {
+	      exports.event = event0;
+	    }
+	  };
+	}
+
+	function parseTypenames(typenames) {
+	  return typenames.trim().split(/^|\s+/).map(function(t) {
+	    var name = "", i = t.indexOf(".");
+	    if (i >= 0) name = t.slice(i + 1), t = t.slice(0, i);
+	    return {type: t, name: name};
+	  });
+	}
+
+	function onRemove(typename) {
+	  return function() {
+	    var on = this.__on;
+	    if (!on) return;
+	    for (var j = 0, i = -1, m = on.length, o; j < m; ++j) {
+	      if (o = on[j], (!typename.type || o.type === typename.type) && o.name === typename.name) {
+	        this.removeEventListener(o.type, o.listener, o.capture);
+	      } else {
+	        on[++i] = o;
+	      }
+	    }
+	    if (++i) on.length = i;
+	    else delete this.__on;
+	  };
+	}
+
+	function onAdd(typename, value, capture) {
+	  var wrap = filterEvents.hasOwnProperty(typename.type) ? filterContextListener : contextListener;
+	  return function(d, i, group) {
+	    var on = this.__on, o, listener = wrap(value, i, group);
+	    if (on) for (var j = 0, m = on.length; j < m; ++j) {
+	      if ((o = on[j]).type === typename.type && o.name === typename.name) {
+	        this.removeEventListener(o.type, o.listener, o.capture);
+	        this.addEventListener(o.type, o.listener = listener, o.capture = capture);
+	        o.value = value;
+	        return;
+	      }
+	    }
+	    this.addEventListener(typename.type, listener, capture);
+	    o = {type: typename.type, name: typename.name, value: value, listener: listener, capture: capture};
+	    if (!on) this.__on = [o];
+	    else on.push(o);
+	  };
+	}
+
+	function selection_on(typename, value, capture) {
+	  var typenames = parseTypenames(typename + ""), i, n = typenames.length, t;
+
+	  if (arguments.length < 2) {
+	    var on = this.node().__on;
+	    if (on) for (var j = 0, m = on.length, o; j < m; ++j) {
+	      for (i = 0, o = on[j]; i < n; ++i) {
+	        if ((t = typenames[i]).type === o.type && t.name === o.name) {
+	          return o.value;
+	        }
+	      }
+	    }
+	    return;
+	  }
+
+	  on = value ? onAdd : onRemove;
+	  if (capture == null) capture = false;
+	  for (i = 0; i < n; ++i) this.each(on(typenames[i], value, capture));
+	  return this;
+	}
+
+	function customEvent(event1, listener, that, args) {
+	  var event0 = exports.event;
+	  event1.sourceEvent = exports.event;
+	  exports.event = event1;
+	  try {
+	    return listener.apply(that, args);
+	  } finally {
+	    exports.event = event0;
+	  }
+	}
 
 	function dispatchEvent(node, type, params) {
 	  var window = defaultView(node),
 	      event = window.CustomEvent;
 
-	  if (event) {
+	  if (typeof event === "function") {
 	    event = new event(type, params);
 	  } else {
 	    event = window.document.createEvent("Event");
@@ -1379,11 +1343,11 @@
 	  };
 	}
 
-	var selection_dispatch = function(type, params) {
+	function selection_dispatch(type, params) {
 	  return this.each((typeof params === "function"
 	      ? dispatchFunction
 	      : dispatchConstant)(type, params));
-	};
+	}
 
 	var root = [null];
 
@@ -1404,6 +1368,7 @@
 	  data: selection_data,
 	  enter: selection_enter,
 	  exit: selection_exit,
+	  join: selection_join,
 	  merge: selection_merge,
 	  order: selection_order,
 	  sort: selection_sort,
@@ -1424,24 +1389,83 @@
 	  append: selection_append,
 	  insert: selection_insert,
 	  remove: selection_remove,
+	  clone: selection_clone,
 	  datum: selection_datum,
 	  on: selection_on,
 	  dispatch: selection_dispatch
 	};
 
-	var select = function(selector) {
+	function select(selector) {
 	  return typeof selector === "string"
 	      ? new Selection([[document.querySelector(selector)]], [document.documentElement])
 	      : new Selection([[selector]], root);
+	}
+
+	function create(name) {
+	  return select(creator(name).call(document.documentElement));
+	}
+
+	var nextId = 0;
+
+	function local() {
+	  return new Local;
+	}
+
+	function Local() {
+	  this._ = "@" + (++nextId).toString(36);
+	}
+
+	Local.prototype = local.prototype = {
+	  constructor: Local,
+	  get: function(node) {
+	    var id = this._;
+	    while (!(id in node)) if (!(node = node.parentNode)) return;
+	    return node[id];
+	  },
+	  set: function(node, value) {
+	    return node[this._] = value;
+	  },
+	  remove: function(node) {
+	    return this._ in node && delete node[this._];
+	  },
+	  toString: function() {
+	    return this._;
+	  }
 	};
 
-	var selectAll = function(selector) {
+	function sourceEvent() {
+	  var current = exports.event, source;
+	  while (source = current.sourceEvent) current = source;
+	  return current;
+	}
+
+	function point(node, event) {
+	  var svg = node.ownerSVGElement || node;
+
+	  if (svg.createSVGPoint) {
+	    var point = svg.createSVGPoint();
+	    point.x = event.clientX, point.y = event.clientY;
+	    point = point.matrixTransform(node.getScreenCTM().inverse());
+	    return [point.x, point.y];
+	  }
+
+	  var rect = node.getBoundingClientRect();
+	  return [event.clientX - rect.left - node.clientLeft, event.clientY - rect.top - node.clientTop];
+	}
+
+	function mouse(node) {
+	  var event = sourceEvent();
+	  if (event.changedTouches) event = event.changedTouches[0];
+	  return point(node, event);
+	}
+
+	function selectAll(selector) {
 	  return typeof selector === "string"
 	      ? new Selection([document.querySelectorAll(selector)], [document.documentElement])
 	      : new Selection([selector == null ? [] : selector], root);
-	};
+	}
 
-	var touch = function(node, touches, identifier) {
+	function touch(node, touches, identifier) {
 	  if (arguments.length < 3) identifier = touches, touches = sourceEvent().changedTouches;
 
 	  for (var i = 0, n = touches ? touches.length : 0, touch; i < n; ++i) {
@@ -1451,9 +1475,9 @@
 	  }
 
 	  return null;
-	};
+	}
 
-	var touches = function(node, touches) {
+	function touches(node, touches) {
 	  if (touches == null) touches = sourceEvent().touches;
 
 	  for (var i = 0, n = touches ? touches.length : 0, points = new Array(n); i < n; ++i) {
@@ -1461,11 +1485,14 @@
 	  }
 
 	  return points;
-	};
+	}
 
+	exports.clientPoint = point;
+	exports.create = create;
 	exports.creator = creator;
+	exports.customEvent = customEvent;
 	exports.local = local;
-	exports.matcher = matcher$1;
+	exports.matcher = matcher;
 	exports.mouse = mouse;
 	exports.namespace = namespace;
 	exports.namespaces = namespaces;
@@ -1474,21 +1501,21 @@
 	exports.selection = selection;
 	exports.selector = selector;
 	exports.selectorAll = selectorAll;
+	exports.style = styleValue;
 	exports.touch = touch;
 	exports.touches = touches;
 	exports.window = defaultView;
-	exports.customEvent = customEvent;
 
 	Object.defineProperty(exports, '__esModule', { value: true });
 
-	})));
+	}));
 
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(Chart) {'use strict';
+	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 		value: true
@@ -1500,6 +1527,8 @@
 	var _accessor = __webpack_require__(7);
 
 	var _lineElement = __webpack_require__(9);
+
+	var _pointElement = __webpack_require__(10);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1538,21 +1567,19 @@
 		_createClass(DraggableAnnotationAccessor, null, [{
 			key: 'isSupported',
 			value: function isSupported() {
-				return !!Chart.Annotation;
+				return true;
 			}
 		}, {
 			key: 'getElements',
-			value: function getElements(chartInstance) {
-				return _accessor.DraggableElementAccessor.getElements(chartInstance, Object.keys(chartInstance.annotation.elements).map(function (id) {
-					return chartInstance.annotation.elements[id];
-				}), Object.keys(chartInstance.annotation.elements).map(function (id) {
-					return chartInstance.annotation.elements[id].options;
+			value: function getElements(event, chartInstance) {
+				return _accessor.DraggableElementAccessor.getElements(chartInstance, Object.keys(chartInstance.config.options.plugins.annotation.annotations).map(function (id) {
+					return chartInstance.config.options.plugins.annotation.annotations[id];
 				}), function (config) {
 					switch (config.type) {
 						case 'line':
 							return _lineElement.DraggableLineAnnotationElement;
-
-						// @TODO: implement 'box' support, DraggableBoxAnnotationElement class
+						case 'point':
+							return _pointElement.DraggablePointAnnotationElement;
 					}
 				});
 			}
@@ -1560,11 +1587,10 @@
 
 		return DraggableAnnotationAccessor;
 	}(_accessor.DraggableElementAccessor);
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -1574,6 +1600,8 @@
 	exports.DraggableElementAccessor = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _d3Drag = __webpack_require__(3);
 
 	var _element = __webpack_require__(8);
 
@@ -1591,26 +1619,28 @@
 			}
 		}, {
 			key: 'getElements',
-			value: function getElements(chartInstance, elements, configs, elementClass) {
+			value: function getElements(chartInstance, configs, elementClass) {
 				var elementClassFn = typeof elementClass === 'function' ? elementClass : function () {
 					return elementClass;
 				};
 
-				return elements.map(function (element, i) {
-					var className = elementClassFn(configs[i]) || _element.DraggableElement;
-					return new className(chartInstance, element, configs[i]);
+				var draggableElements = configs.map(function (element, i) {
+					var className = elementClassFn(element) || _element.DraggableElement;
+					return new className(chartInstance, configs[i]);
 				}).filter(function (element, i) {
 					return !!configs[i].draggable;
 				});
+
+				return draggableElements;
 			}
 		}]);
 
 		return DraggableElementAccessor;
 	}();
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -1638,11 +1668,10 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var DraggableElement = exports.DraggableElement = function () {
-		function DraggableElement(chartInstance, elementInstance, elementConfig) {
+		function DraggableElement(chartInstance, elementConfig) {
 			_classCallCheck(this, DraggableElement);
 
 			this.chart = chartInstance;
-			this.element = elementInstance;
 			this.config = elementConfig;
 		}
 
@@ -1659,7 +1688,7 @@
 			}
 		}, {
 			key: 'dispatch',
-			value: function dispatch(type, event) {
+			value: function dispatch(type, event, value) {
 				// Invoke plugin callback
 				if (typeof this[type] === 'function') {
 					this[type](event);
@@ -1667,7 +1696,10 @@
 
 				// Invoke user callback
 				if (typeof this.config[type] === 'function') {
-					this.config[type](event);
+					var _config;
+
+					var args = [event, this.config.value];
+					(_config = this.config)[type].apply(_config, args);
 				}
 			}
 		}]);
@@ -1675,9 +1707,9 @@
 		return DraggableElement;
 	}();
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -1687,6 +1719,8 @@
 	exports.DraggableLineAnnotationElement = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
 	var _element = __webpack_require__(8);
 
@@ -1699,10 +1733,10 @@
 	var DraggableLineAnnotationElement = exports.DraggableLineAnnotationElement = function (_DraggableElement) {
 		_inherits(DraggableLineAnnotationElement, _DraggableElement);
 
-		function DraggableLineAnnotationElement(chartInstance, elementInstance, elementConfig) {
+		function DraggableLineAnnotationElement(chartInstance, elementConfig) {
 			_classCallCheck(this, DraggableLineAnnotationElement);
 
-			var _this = _possibleConstructorReturn(this, (DraggableLineAnnotationElement.__proto__ || Object.getPrototypeOf(DraggableLineAnnotationElement)).call(this, chartInstance, elementInstance, elementConfig));
+			var _this = _possibleConstructorReturn(this, (DraggableLineAnnotationElement.__proto__ || Object.getPrototypeOf(DraggableLineAnnotationElement)).call(this, chartInstance, elementConfig));
 
 			_this.scale = _this.chart.scales[elementConfig.scaleID];
 			return _this;
@@ -1735,10 +1769,99 @@
 			value: function onDragEnd(event) {
 				this.offset = undefined;
 			}
+		}, {
+			key: 'dispatch',
+			value: function dispatch(type, event) {
+				_get(DraggableLineAnnotationElement.prototype.__proto__ || Object.getPrototypeOf(DraggableLineAnnotationElement.prototype), 'dispatch', this).call(this, type, event, this.config.value);
+			}
 		}]);
 
 		return DraggableLineAnnotationElement;
 	}(_element.DraggableElement);
 
-/***/ }
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	exports.DraggablePointAnnotationElement = undefined;
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+	var _element = __webpack_require__(8);
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var DraggablePointAnnotationElement = exports.DraggablePointAnnotationElement = function (_DraggableElement) {
+		_inherits(DraggablePointAnnotationElement, _DraggableElement);
+
+		function DraggablePointAnnotationElement(chartInstance, elementConfig) {
+			_classCallCheck(this, DraggablePointAnnotationElement);
+
+			var _this = _possibleConstructorReturn(this, (DraggablePointAnnotationElement.__proto__ || Object.getPrototypeOf(DraggablePointAnnotationElement)).call(this, chartInstance, elementConfig));
+
+			_this.scale = _this.chart.scales[elementConfig.scaleID];
+			return _this;
+		}
+
+		_createClass(DraggablePointAnnotationElement, [{
+			key: '_getPixel',
+			value: function _getPixel(event) {
+				return this.scale.isHorizontal() ? event.x : event.y;
+			}
+		}, {
+			key: '_getValue',
+			value: function _getValue(event) {
+				var offset = this.offset || 0;
+				return this.scale.getValueForPixel(this._getPixel(event) - offset);
+			}
+		}, {
+			key: 'onDragStart',
+			value: function onDragStart(event) {
+				this.offset = this._getPixel(event) - this.scale.getPixelForValue(this.getAppropriateValue());
+			}
+		}, {
+			key: 'onDrag',
+			value: function onDrag(event) {
+				var newValue = this._constrainValue(this.scale, this._getValue(event));
+				this.setAppropriateValue(newValue);
+				this.chart.update(0);
+			}
+		}, {
+			key: 'onDragEnd',
+			value: function onDragEnd(event) {
+				this.offset = undefined;
+			}
+		}, {
+			key: 'getAppropriateValue',
+			value: function getAppropriateValue() {
+				return this.scale.isHorizontal() ? this.config.xValue : this.config.yValue;
+			}
+		}, {
+			key: 'setAppropriateValue',
+			value: function setAppropriateValue(value) {
+				this.scale.isHorizontal() ? this.config.xValue = value : this.config.yValue = value;
+				this.config.value = value;
+			}
+		}, {
+			key: 'dispatch',
+			value: function dispatch(type, event) {
+				_get(DraggablePointAnnotationElement.prototype.__proto__ || Object.getPrototypeOf(DraggablePointAnnotationElement.prototype), 'dispatch', this).call(this, type, event, this.getAppropriateValue());
+			}
+		}]);
+
+		return DraggablePointAnnotationElement;
+	}(_element.DraggableElement);
+
+/***/ })
 /******/ ]);

@@ -3,15 +3,15 @@
 
 <head>
     <title>Scatter Chart</title>
-    <script src="../node_modules/chart.js/dist/Chart.bundle.js"></script>
-    <script src="../node_modules/chartjs-plugin-annotation/chartjs-plugin-annotation.min.js"></script>
+    <script src="../node_modules/chart.js/dist/chart.js"></script>
+    <script src="../node_modules/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.js"></script>
     <script src="../dist/chartjs-plugin-draggable.js"></script>
     <style>
-    canvas {
-        -moz-user-select: none;
-        -webkit-user-select: none;
-        -ms-user-select: none;
-    }
+        canvas {
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
     </style>
 </head>
 
@@ -22,10 +22,10 @@
         </div>
     </div>
     <script>
-        var randomScalingFactor = function() {
+        var randomScalingFactor = function () {
             return (Math.random() > 0.5 ? 1.0 : -1.0) * Math.round(Math.random() * 100);
         };
-        var randomColor = function(opacity) {
+        var randomColor = function (opacity) {
             return 'rgba(' + Math.round(Math.random() * 255) + ',' + Math.round(Math.random() * 255) + ',' + Math.round(Math.random() * 255) + ',' + (opacity || '.3') + ')';
         };
 
@@ -81,7 +81,7 @@
             }]
         };
 
-        scatterChartData.datasets.forEach(function(dataset) {
+        scatterChartData.datasets.forEach(function (dataset) {
             dataset.borderColor = randomColor(0.4);
             dataset.backgroundColor = randomColor(0.1);
             dataset.pointBorderColor = randomColor(0.7);
@@ -89,9 +89,10 @@
             dataset.pointBorderWidth = 1;
         });
 
-        window.onload = function() {
+        window.onload = function () {
             var ctx = document.getElementById("canvas").getContext("2d");
-            window.myScatter = Chart.Scatter(ctx, {
+            window.myScatter = new Chart(ctx, {
+                type: 'scatter',
                 data: scatterChartData,
                 options: {
                     title: {
@@ -99,76 +100,115 @@
                         text: 'Chart.js Scatter Chart'
                     },
                     scales: {
-                        xAxes: [{
-                            position: 'top',
-                            gridLines: {
-                                zeroLineColor: "rgba(0,255,0,1)"
-                            },
-                            scaleLabel: {
-                                display: true,
-                                labelString: 'x axis'
-                            },
-                            ticks: {
-                                maxRotation: 0,
-                                reverse: true
-                            }
-                        }],
-                        yAxes: [{
-                            position: 'right',
-                            gridLines: {
-                                zeroLineColor: "rgba(0,255,0,1)"
-                            },
-                            scaleLabel: {
-                                display: true,
-                                labelString: 'y axis'
-                            },
-                            ticks: {
-                                reverse: true
-                            }
-                        }]
+                        // xAxes: [{
+                        //     position: 'top',
+                        //     gridLines: {
+                        //         zeroLineColor: "rgba(0,255,0,1)"
+                        //     },
+                        //     scaleLabel: {
+                        //         display: true,
+                        //         labelString: 'x axis'
+                        //     },
+                        //     ticks: {
+                        //         maxRotation: 0,
+                        //         reverse: true
+                        //     }
+                        // }],
+                        // yAxes: [{
+                        //     position: 'right',
+                        //     gridLines: {
+                        //         zeroLineColor: "rgba(0,255,0,1)"
+                        //     },
+                        //     scaleLabel: {
+                        //         display: true,
+                        //         labelString: 'y axis'
+                        //     },
+                        //     ticks: {
+                        //         reverse: true
+                        //     }
+                        // }]
                     },
-                    annotation: {
-                        events: ['click'],
-                        annotations: [{
-                            type: 'line',
-                            mode: 'horizontal',
-                            scaleID: 'y-axis-1',
-                            value: 25,
-                            borderWidth: 4,
-                            label: {
-                                enabled: true,
-                                content: "This is a long test label"
-                            },
-                            draggable: true,
-                            onClick: function(e) {
-                                console.log(e.type, this);
+                    plugins: {
+                        annotation: {
+                            events: ['click'],
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    mode: "vertical",
+                                    scaleID: 'y',
+                                    value: 25,
+                                    yMin: 0,
+                                    yMax: 0,
+                                    borderWidth: 4,
+                                    label: {
+                                        enabled: true,
+                                        content: "This is a long test label"
+                                    },
+                                    draggable: true,
+                                    onDragStart: function (event) {
+                                        console.log("Start dragging")
+                                    },
+                                    onClick: function (e) {
+                                        console.log(e.type, this);
+                                    }
+                                },
+                                line2: {
+                                    type: 'line',
+                                    mode: "horizontal",
+                                    scaleID: 'x',
+                                    value: 25,
+                                    xMin: 0,
+                                    xMax: 0,
+                                    borderWidth: 4,
+                                    label: {
+                                        enabled: true,
+                                        content: "This is a another test label"
+                                    },
+                                    draggable: true,
+                                    onDragStart: function (event) {
+                                        console.log("Start dragging")
+                                    },
+                                    onClick: function (e) {
+                                        console.log(e.type, this);
+                                    }
+                                },
+                                point1: {
+                                    type: 'point',
+                                    mode: "horizontal",
+                                    scaleID: 'x',
+                                    value: 0,
+                                    xValue: 0,
+                                    yValue: 0,
+                                    // xMin: 0,
+                                    // xMax: 0,
+                                    // yMin: 0,
+                                    // yMax: 0,
+                                    borderWidth: 4,
+                                    label: {
+                                        enabled: true,
+                                        content: "This is a another test label"
+                                    },
+                                    draggable: true,
+                                    onDragStart: function (event) {
+                                        console.log("Start dragging")
+                                    },
+                                    onDrag: function(event, value) {
+                                        console.log(value)
+                                    },
+                                    onClick: function (e) {
+                                        console.log(e.type, this);
+                                    }
+                                },
+                                box1: {
+                                    type: 'box',
+                                    xMin: 25,
+                                    xMax: 45,
+                                    yMin: 25,
+                                    yMax: 45,
+                                    borderWidth: 4
+                                }
                             }
-                        },
-                        {
-                            type: 'line',
-                            mode: 'vertical',
-                            scaleID: 'x-axis-1',
-                            value: 25,
-                            borderWidth: 4,
-                            label: {
-                                enabled: true,
-                                content: "This is a another test label"
-                            },
-                            draggable: true,
-                            onClick: function(e) {
-                                console.log(e.type, this);
-                            }
-                        },
-                        {
-                            type: 'box',
-                            xScaleID: 'x-axis-1',
-                            yScaleID: 'y-axis-1',
-                            xMin: 25,
-                            xMax: 45,
-                            yMin: 25,
-                            yMax: 45,
-                            borderWidth: 4
-                        }]
+                        }
                     }
                 }
             });

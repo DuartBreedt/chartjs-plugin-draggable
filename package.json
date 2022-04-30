@@ -27,11 +27,12 @@
     "webpack-node-externals": "^1.5.4"
   },
   "dependencies": {
-    "chart.js": "^2.4.0",
+    "chart.js": "^3.7.1",
+    "chartjs-plugin-annotation": "^1.4.0",
     "d3-drag": "^1.0.1",
     "d3-selection": "^1.0.2"
   },
   "peerDependencies": {
-    "chartjs-plugin-annotation": "^0.5.2"
+    "chartjs-plugin-annotation": "^1.4.0"
   }
 }
