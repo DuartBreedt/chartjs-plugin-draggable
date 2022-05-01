@@ -30,6 +30,14 @@ export class DraggableLineAnnotationElement extends DraggableElement {
 		this.offset = undefined;
 	}
 
+	getAppropriateValue() {
+		return this.config.value
+	}
+
+	setAppropriateValue(value) {
+		this.config.value = value
+	}
+
 	dispatch(type, event) {
 		super.dispatch(type, event, this.config.value)
 	}

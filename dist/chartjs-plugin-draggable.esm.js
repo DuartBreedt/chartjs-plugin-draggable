@@ -4,12 +4,6 @@
  * (c) 2022 chartjs-plugin-annotation Contributors
  * Released under the MIT License
  */
-(function (global, factory) {
-typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('chart.js')) :
-typeof define === 'function' && define.amd ? define(['chart.js'], factory) :
-(global = typeof globalThis !== 'undefined' ? globalThis : global || self, global["chartjs-plugin-draggable"] = factory(global.Chart));
-})(this, (function (chart_js) { 'use strict';
-
 var noop = {value: function() {}};
 
 function dispatch() {
@@ -1460,7 +1454,7 @@ function getDispatcher(subjectPicker, type) {
 	return () => subjectPicker().dispatch(type, event);
 }
 
-var ChartjsDraggablePlugin = {
+var plugin = {
 
 	id: "chartjsDraggablePlugin",
 
@@ -1487,8 +1481,4 @@ var ChartjsDraggablePlugin = {
 	}
 };
 
-chart_js.Chart.register(ChartjsDraggablePlugin);
-
-return ChartjsDraggablePlugin;
-
-}));
+export { plugin as default };

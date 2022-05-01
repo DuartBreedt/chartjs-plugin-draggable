@@ -1,14 +1,9 @@
 'use strict';
 
-import Chart from 'chart.js';
+import { Chart } from 'chart.js';
 
-import { ChartjsDraggablePlugin } from './plugin';
-import { DraggableAnnotationAccessor } from './annotation/accessor';
+import ChartjsDraggablePlugin from './plugin';
 
-const plugin = new ChartjsDraggablePlugin([
-	DraggableAnnotationAccessor
-]);
+Chart.register(ChartjsDraggablePlugin);
 
-Chart.register(plugin);
-
-export default plugin;
+export default ChartjsDraggablePlugin;

@@ -1,8 +1,9 @@
 'use strict';
 
-import Chart from 'chart.js';
 import { drag } from 'd3-drag';
 import { select, event } from 'd3-selection';
+import { version } from '../package.json';
+import { DraggableAnnotationAccessor } from './annotation/accessor';
 
 function getFilter(chart, accessors) {
 	return () => {
@@ -16,10 +17,17 @@ function getFilter(chart, accessors) {
 			// Pick the element(s) nearest the mouse position
 			.reduce((nearestElement, element) => {
 
-				const elementPixelDimension = element.scale.getPixelForValue(element.config.value)
-				let elementCenter = element.scale.isHorizontal() ? { x: elementPixelDimension, y: event.y } : { x: event.x, y: elementPixelDimension } 
+				const mouseAbsolutePosition = { x: event.x, y: event.y }
 
-				let distance = Chart.helpers.distanceBetweenPoints(elementCenter, event);
+				const canvasRect = chart.canvas.getBoundingClientRect()
+				const canvasPosition = { x: canvasRect.x, y: canvasRect.y }
+
+				const mouseRelativePosition = {x: mouseAbsolutePosition.x - canvasPosition.x, y: mouseAbsolutePosition.y - canvasPosition.y}
+
+				const elementPixelDimension = element.scale.getPixelForValue(element.config.value)
+				const elementPosition = element.scale.isHorizontal() ? { x: elementPixelDimension, y: mouseRelativePosition.y } : { x: mouseRelativePosition.x, y: elementPixelDimension }
+				
+				const distance = distanceBetweenPoints(elementPosition, mouseRelativePosition);
 
 				if (distance < 20 && distance < minDistance) {
 					nearestElement = element;
@@ -33,6 +41,10 @@ function getFilter(chart, accessors) {
 	};
 }
 
+function distanceBetweenPoints(point1, point2) {
+	return Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
+}
+
 function getSubjectPicker(chartInstance) {
 	return () => chartInstance.draggable.subject;
 }
@@ -41,11 +53,16 @@ function getDispatcher(subjectPicker, type) {
 	return () => subjectPicker().dispatch(type, event);
 }
 
-export class ChartjsDraggablePlugin {
-	constructor(accessors) {
-		this.id = "chartjsDraggablePlugin"
-		this.accessors = accessors.filter(accessor => accessor.isSupported());
-	}
+export default {
+
+	id: "chartjsDraggablePlugin",
+
+	version,
+
+	accessors: [
+		DraggableAnnotationAccessor
+	].filter(accessor => accessor.isSupported()),
+
 
 	afterInit(chart) {
 		chart.draggable = {};

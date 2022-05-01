@@ -31,7 +31,7 @@ module.exports = {
 			{
 				// compile down from ES5
 				test: /\.js$/,
-				exclude: /node_modules/,
+				// exclude: /node_modules/,
 				loader: 'babel-loader'
 			}
 		]

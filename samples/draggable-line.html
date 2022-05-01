@@ -91,6 +91,28 @@
 
         window.onload = function () {
             var ctx = document.getElementById("canvas").getContext("2d");
+
+            const line1 = {
+                type: 'line',
+                mode: "vertical",
+                // scaleID: 'y',
+                value: 25,
+                yMin: 0,
+                yMax: 0,
+                borderWidth: 4,
+                label: {
+                    enabled: true,
+                    content: "This is a long test label"
+                },
+                // draggable: true,
+                // onDragStart: function (event) {
+                //     console.log("Start dragging")
+                // },
+                // onClick: function (e) {
+                //     console.log(e.type, this);
+                // }
+            }
+
             window.myScatter = new Chart(ctx, {
                 type: 'scatter',
                 data: scatterChartData,
@@ -132,26 +154,7 @@
                         annotation: {
                             events: ['click'],
                             annotations: {
-                                line1: {
-                                    type: 'line',
-                                    mode: "vertical",
-                                    scaleID: 'y',
-                                    value: 25,
-                                    yMin: 0,
-                                    yMax: 0,
-                                    borderWidth: 4,
-                                    label: {
-                                        enabled: true,
-                                        content: "This is a long test label"
-                                    },
-                                    draggable: true,
-                                    onDragStart: function (event) {
-                                        console.log("Start dragging")
-                                    },
-                                    onClick: function (e) {
-                                        console.log(e.type, this);
-                                    }
-                                },
+                                line1: line1,
                                 line2: {
                                     type: 'line',
                                     mode: "horizontal",
@@ -177,27 +180,28 @@
                                     mode: "horizontal",
                                     scaleID: 'x',
                                     value: 0,
-                                    xValue: 0,
-                                    yValue: 0,
+                                    xValue: 2,
+                                    yValue: 2,
                                     // xMin: 0,
                                     // xMax: 0,
                                     // yMin: 0,
                                     // yMax: 0,
-                                    borderWidth: 4,
-                                    label: {
-                                        enabled: true,
-                                        content: "This is a another test label"
-                                    },
+                                    // borderWidth: 4,
+                                    // label: {
+                                    //     enabled: true,
+                                    //     content: "This is a another test label"
+                                    // },
                                     draggable: true,
                                     onDragStart: function (event) {
                                         console.log("Start dragging")
                                     },
-                                    onDrag: function(event, value) {
-                                        console.log(value)
+                                    onDrag: function (event, value) {
+                                        console.log("Start dragging")
                                     },
-                                    onClick: function (e) {
-                                        console.log(e.type, this);
-                                    }
+                                    onDragEnd: function (event, value) {
+                                        console.log("Start dragging")
+                                    },
+                                    backgroundColor: 'rgba(255, 99, 132, 1.00)'
                                 },
                                 box1: {
                                     type: 'box',
