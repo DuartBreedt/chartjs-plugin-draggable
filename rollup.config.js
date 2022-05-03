@@ -6,7 +6,7 @@ const {name, version, homepage, main, module: _module} = require('./package.json
 const banner = `/*!
 * ${name} v${version}
 * ${homepage}
- * (c) ${(new Date(process.env.SOURCE_DATE_EPOCH ? (process.env.SOURCE_DATE_EPOCH * 1000) : new Date().getTime())).getFullYear()} chartjs-plugin-annotation Contributors
+ * (c) ${(new Date(process.env.SOURCE_DATE_EPOCH ? (process.env.SOURCE_DATE_EPOCH * 1000) : new Date().getTime())).getFullYear()} chartjs-plugin-draggable Contributors
  * Released under the MIT License
  */`;
 

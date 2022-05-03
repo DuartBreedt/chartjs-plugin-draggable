@@ -2,7 +2,7 @@
   "name": "chartjs-plugin-draggable",
   "version": "0.2.6",
   "description": "Draggable element plugin for Chart.js",
-  "homepage": "Huh?",
+  "homepage": "https://github.com/DuartBreedt/chartjs-plugin-draggable",
   "main": "dist/chartjs-plugin-draggable.js",
   "module": "dist/chartjs-plugin-draggable.esm.js",
   "files": [
@@ -22,7 +22,7 @@
     "draggable",
     "annotation"
   ],
-  "author": "Jonathon Hill <jhill9693@gmail.com>",
+  "author": "Duart Breedt <duartbreedt@gmail.com>",
   "license": "MIT",
   "devDependencies": {
     "@rollup/plugin-json": "^4.1.0",

@@ -1348,7 +1348,6 @@ class DraggablePointAnnotationElement extends DraggableElement {
 	onDrag(event) {
 		const newValue = this._constrainValue(this.scale, this._getValue(event));
 		if (newValue != this.getAppropriateValue()) {
-			console.log(this.chart);
 			this.setAppropriateValue(newValue);
 			this.chart.update();
 		}
